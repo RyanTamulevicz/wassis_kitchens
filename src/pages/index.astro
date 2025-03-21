@@ -8,6 +8,7 @@ import Hero from "@/components/hero";
 import heroImage from "@/assets/hero_image.jpg";
 import About from "@/components/about";
 import aboutImage from "@/assets/about_image.jpg";
+import Services from "@/components/services";
 ---
 
 <Layout title=''>
@@ -16,7 +17,7 @@ import aboutImage from "@/assets/about_image.jpg";
       <Image src={logo} alt='Wassi Logo' width={120} height={60} />
     </Navbar>
     <section id='home'>
-      <Hero client:load>
+      <Hero>
         <Image
           src={heroImage}
           alt='Outdoor Kitchen'
@@ -26,7 +27,7 @@ import aboutImage from "@/assets/about_image.jpg";
       </Hero>
     </section>
     <section id='about' class='py-16 md:py-24'>
-      <About client:load>
+      <About>
         <Image
           src={aboutImage}
           alt='About section kitchen'
@@ -35,6 +36,9 @@ import aboutImage from "@/assets/about_image.jpg";
           class='object-cover rounded-lg'
         />
       </About>
+    </section>
+    <section id='services' class='py-16 md:py-24'>
+      <Services />
     </section>
   </main>
 </Layout>
