@@ -6,15 +6,17 @@ import Navbar from "@/components/navbar";
 import logo from "@/assets/wassi_logo_no_bg.png";
 import Hero from "@/components/hero";
 import heroImage from "@/assets/hero_image.jpg";
+import About from "@/components/about";
+import aboutImage from "@/assets/about_image.jpg";
 ---
 
 <Layout title=''>
   <main class='min-h-screen'>
-    <Navbar>
+    <Navbar client:load>
       <Image src={logo} alt='Wassi Logo' width={120} height={60} />
     </Navbar>
     <section id='home'>
-      <Hero>
+      <Hero client:load>
         <Image
           src={heroImage}
           alt='Outdoor Kitchen'
@@ -22,6 +24,17 @@ import heroImage from "@/assets/hero_image.jpg";
           priority
         />
       </Hero>
+    </section>
+    <section id='about' class='py-16 md:py-24'>
+      <About client:load>
+        <Image
+          src={aboutImage}
+          alt='About section kitchen'
+          width={600}
+          height={800}
+          class='object-cover rounded-lg'
+        />
+      </About>
     </section>
   </main>
 </Layout>
