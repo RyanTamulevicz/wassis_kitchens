@@ -9,6 +9,53 @@ import heroImage from "@/assets/hero_image.jpg";
 import About from "@/components/about";
 import aboutImage from "@/assets/about_image.jpg";
 import Services from "@/components/services";
+import Gallery from "@/components/gallery";
+import GalleryImage1 from "@/assets/gallery/gal1.jpg";
+import GalleryImage2 from "@/assets/gallery/gal2.jpg";
+import GalleryImage3 from "@/assets/gallery/gal3.jpg";
+import GalleryImage4 from "@/assets/gallery/gal4.jpg";
+import GalleryImage5 from "@/assets/gallery/gal5.jpg";
+import GalleryImage6 from "@/assets/gallery/gal6.jpg";
+
+// Extract image metadata for the gallery
+const galleryImages = [
+  {
+    src: GalleryImage1.src,
+    alt: "Luxury outdoor kitchen with stone countertops",
+    width: GalleryImage1.width,
+    height: GalleryImage1.height,
+  },
+  {
+    src: GalleryImage2.src,
+    alt: "Modern outdoor kitchen with pizza oven",
+    width: GalleryImage2.width,
+    height: GalleryImage2.height,
+  },
+  {
+    src: GalleryImage3.src,
+    alt: "Rustic outdoor kitchen with pergola",
+    width: GalleryImage3.width,
+    height: GalleryImage3.height,
+  },
+  {
+    src: GalleryImage4.src,
+    alt: "Poolside outdoor kitchen and bar",
+    width: GalleryImage4.width,
+    height: GalleryImage4.height,
+  },
+  {
+    src: GalleryImage5.src,
+    alt: "Compact outdoor kitchen for small spaces",
+    width: GalleryImage5.width,
+    height: GalleryImage5.height,
+  },
+  {
+    src: GalleryImage6.src,
+    alt: "Elegant outdoor kitchen with fireplace",
+    width: GalleryImage6.width,
+    height: GalleryImage6.height,
+  },
+];
 ---
 
 <Layout title=''>
@@ -31,14 +78,17 @@ import Services from "@/components/services";
         <Image
           src={aboutImage}
           alt='About section kitchen'
-          width={600}
-          height={800}
+          width={400}
+          height={500}
           class='object-cover rounded-lg'
         />
       </About>
     </section>
     <section id='services' class='py-16 md:py-24'>
       <Services />
+    </section>
+    <section id='gallery' class='py-16 md:py-24'>
+      <Gallery images={galleryImages} />
     </section>
   </main>
 </Layout>
