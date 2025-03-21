@@ -4,6 +4,8 @@ import Layout from "@/layouts/main.astro";
 import { Image } from "astro:assets";
 import Navbar from "@/components/navbar";
 import logo from "@/assets/wassi_logo_no_bg.png";
+import Hero from "@/components/hero";
+import heroImage from "@/assets/hero_image.jpg";
 ---
 
 <Layout title=''>
@@ -11,5 +13,15 @@ import logo from "@/assets/wassi_logo_no_bg.png";
     <Navbar>
       <Image src={logo} alt='Wassi Logo' width={120} height={60} />
     </Navbar>
+    <section id='home'>
+      <Hero>
+        <Image
+          src={heroImage}
+          alt='Outdoor Kitchen'
+          class='object-cover w-full h-full brightness-[0.7]'
+          priority
+        />
+      </Hero>
+    </section>
   </main>
 </Layout>
