@@ -3,6 +3,24 @@ import "@/styles/global.css";
 const { title } = Astro.props;
 ---
 
+<script is:inline>
+  const getThemePreference = () => {
+    // Always use system preference
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+
+  const isDark = getThemePreference() === "dark";
+  document.documentElement.classList[isDark ? "add" : "remove"]("dark");
+
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", (e) => {
+      document.documentElement.classList[e.matches ? "add" : "remove"]("dark");
+    });
+</script>
+
 <html lang='en'>
   <head>
     <meta charset='utf-8' />
