@@ -13,4 +13,9 @@
 	"observability": {
     "enabled": true
   }
+	// Required environment variables (set via .dev.vars for local dev or Cloudflare dashboard for production):
+	// - PUBLIC_TURNSTILE_SITE_KEY: Public key for Cloudflare Turnstile widget (client-side, PUBLIC_ prefix required)
+	// - TURNSTILE_SECRET_KEY: Secret key for Cloudflare Turnstile verification (server-side only)
+	// - RESEND_API_KEY: API key for Resend email service
+	// - CONTACT_EMAIL: Email address to receive contact form submissions
 }

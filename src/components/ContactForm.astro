@@ -109,6 +109,11 @@ import { actions } from "astro:actions";
             placeholder="Tell us about your project..."></textarea>
         </div>
 
+        <!-- Cloudflare Turnstile Widget -->
+        <div class="flex justify-center">
+          <div id="turnstile-widget"></div>
+        </div>
+
         <button
           type="submit"
           id="submit-button"
@@ -141,8 +146,32 @@ import { actions } from "astro:actions";
   </div>
 </section>
 
+<!-- Cloudflare Turnstile Script -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer
+></script>
+
 <script>
   import { actions } from "astro:actions";
+
+  // TypeScript declarations for Cloudflare Turnstile
+  interface TurnstileOptions {
+    sitekey: string;
+    theme?: "light" | "dark" | "auto";
+    callback?: (token: string) => void;
+    "error-callback"?: () => void;
+    "expired-callback"?: () => void;
+  }
+
+  interface Turnstile {
+    render: (container: HTMLElement, options: TurnstileOptions) => string;
+    reset: (widgetId: string) => void;
+  }
+
+  declare global {
+    interface Window {
+      turnstile?: Turnstile;
+    }
+  }
 
   const form = document.getElementById("contact-form") as HTMLFormElement;
   const successMessage = document.getElementById("success-message");
@@ -154,6 +183,58 @@ import { actions } from "astro:actions";
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
+
+  // Turnstile widget ID and token
+  let turnstileWidgetId: string | null = null;
+  let turnstileToken: string | null = null;
+
+  // Initialize Turnstile widget
+  function initTurnstile() {
+    const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+    if (!siteKey) {
+      console.error("Turnstile site key is not configured");
+      return;
+    }
+
+    const widgetContainer = document.getElementById("turnstile-widget");
+    if (!widgetContainer) return;
+
+    // Wait for Turnstile script to load
+    if (typeof window.turnstile === "undefined") {
+      // Retry after a short delay if script hasn't loaded yet
+      setTimeout(initTurnstile, 100);
+      return;
+    }
+
+    turnstileWidgetId = window.turnstile.render(widgetContainer, {
+      sitekey: siteKey,
+      theme: "dark",
+      callback: (token: string) => {
+        turnstileToken = token;
+      },
+      "error-callback": () => {
+        turnstileToken = null;
+      },
+      "expired-callback": () => {
+        turnstileToken = null;
+      },
+    });
+  }
+
+  // Reset Turnstile widget
+  function resetTurnstile() {
+    if (turnstileWidgetId !== null && typeof window.turnstile !== "undefined") {
+      window.turnstile.reset(turnstileWidgetId);
+      turnstileToken = null;
+    }
+  }
+
+  // Initialize Turnstile when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTurnstile);
+  } else {
+    initTurnstile();
+  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -170,6 +251,13 @@ import { actions } from "astro:actions";
       )
         return;
 
+      // Check if Turnstile token is available
+      if (!turnstileToken) {
+        errorText.textContent = "Please complete the security verification.";
+        errorMessage.classList.remove("hidden");
+        return;
+      }
+
       // Hide any previous messages
       successMessage.classList.add("hidden");
       errorMessage.classList.add("hidden");
@@ -181,12 +269,18 @@ import { actions } from "astro:actions";
 
       try {
         const formData = new FormData(form);
+        // Add Turnstile token to form data
+        formData.append("cf-turnstile-response", turnstileToken);
+
         const result = await actions.submitContactForm(formData);
 
         // Reset loading state
         submitButton.disabled = false;
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
+
+        // Reset Turnstile widget after submission attempt
+        resetTurnstile();
 
         // Astro Actions wraps the response in a SafeResult with a 'data' property
         if (result.error) {
@@ -209,6 +303,8 @@ import { actions } from "astro:actions";
           setTimeout(() => {
             successMessage.classList.add("hidden");
             form.classList.remove("hidden");
+            // Reinitialize Turnstile widget after showing form again
+            initTurnstile();
           }, 5000);
         } else {
           // Show error message from the action response
@@ -222,6 +318,9 @@ import { actions } from "astro:actions";
         submitButton.disabled = false;
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
+
+        // Reset Turnstile widget on error
+        resetTurnstile();
 
         // Log the error for debugging
         console.error("Form submission error:", error);
