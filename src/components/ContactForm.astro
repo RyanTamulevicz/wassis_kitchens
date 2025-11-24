@@ -169,8 +169,10 @@ import { actions } from "astro:actions";
 </div>
 
 <!-- Cloudflare Turnstile Script -->
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer
-></script>
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+  async
+  defer></script>
 
 <script>
   import { actions } from "astro:actions";
@@ -185,8 +187,13 @@ import { actions } from "astro:actions";
   }
 
   interface Turnstile {
-    render: (container: HTMLElement, options: TurnstileOptions) => string;
+    render: (
+      container: HTMLElement | string,
+      options: TurnstileOptions
+    ) => string;
     reset: (widgetId: string) => void;
+    ready: (callback: () => void) => void;
+    remove: (widgetId: string) => void;
   }
 
   declare global {
@@ -242,50 +249,105 @@ import { actions } from "astro:actions";
       // Reset token
       turnstileToken = null;
 
-      // Wait for Turnstile script to load
-      const tryRender = () => {
-        if (typeof window.turnstile === "undefined") {
-          setTimeout(tryRender, 100);
+      // Use turnstile.ready() callback per Cloudflare documentation
+      if (typeof window.turnstile === "undefined") {
+        // If turnstile is not loaded yet, wait for it
+        const checkTurnstile = setInterval(() => {
+          if (typeof window.turnstile !== "undefined") {
+            clearInterval(checkTurnstile);
+            renderWidget();
+          }
+        }, 100);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkTurnstile);
+          if (typeof window.turnstile === "undefined") {
+            reject(new Error("Turnstile script failed to load"));
+          }
+        }, 10000);
+      } else {
+        renderWidget();
+      }
+
+      function renderWidget() {
+        if (!window.turnstile) {
+          reject(new Error("Turnstile API not available"));
+          return;
+        }
+
+        // Verify widget container still exists
+        if (!widgetContainer) {
+          reject(new Error("Turnstile widget container not found"));
           return;
         }
 
         // Clear container before rendering
         widgetContainer.innerHTML = "";
 
-        // Render Turnstile widget
-        turnstileWidgetId = window.turnstile.render(widgetContainer, {
-          sitekey: siteKey,
-          theme: "dark",
-          callback: (token: string) => {
-            turnstileToken = token;
-            // Hide modal and resolve with token
-            hideModal();
-            resolve(token);
-          },
-          "error-callback": () => {
-            turnstileToken = null;
-            reject(new Error("Turnstile verification failed"));
-          },
-          "expired-callback": () => {
-            turnstileToken = null;
-            // Don't reject on expiry, just reset
-            const expiredContainer =
-              document.getElementById("turnstile-widget");
-            if (expiredContainer && turnstileWidgetId !== null) {
-              expiredContainer.innerHTML = "";
-              tryRender();
-            }
-          },
+        // Use turnstile.ready() to ensure API is fully loaded
+        window.turnstile.ready(() => {
+          // Render Turnstile widget
+          if (!widgetContainer) {
+            reject(new Error("Widget container disappeared"));
+            return;
+          }
+          turnstileWidgetId = window.turnstile!.render(widgetContainer, {
+            sitekey: siteKey,
+            theme: "dark",
+            callback: (token: string) => {
+              turnstileToken = token;
+              // Hide modal and resolve with token
+              hideModal();
+              resolve(token);
+            },
+            "error-callback": () => {
+              turnstileToken = null;
+              reject(new Error("Turnstile verification failed"));
+            },
+            "expired-callback": () => {
+              turnstileToken = null;
+              // Don't reject on expiry, just reset
+              const expiredContainer =
+                document.getElementById("turnstile-widget");
+              if (expiredContainer && turnstileWidgetId !== null) {
+                expiredContainer.innerHTML = "";
+                // Re-render widget after expiry
+                if (window.turnstile) {
+                  window.turnstile.ready(() => {
+                    turnstileWidgetId = window.turnstile!.render(
+                      expiredContainer,
+                      {
+                        sitekey: siteKey,
+                        theme: "dark",
+                        callback: (token: string) => {
+                          turnstileToken = token;
+                          hideModal();
+                          resolve(token);
+                        },
+                        "error-callback": () => {
+                          turnstileToken = null;
+                          reject(new Error("Turnstile verification failed"));
+                        },
+                      }
+                    );
+                  });
+                }
+              }
+            },
+          });
         });
-      };
-
-      tryRender();
+      }
     });
   }
 
   // Reset Turnstile widget
   function resetTurnstile() {
     if (turnstileWidgetId !== null && typeof window.turnstile !== "undefined") {
+      // Use remove() to properly clean up the widget
+      if (window.turnstile.remove) {
+        window.turnstile.remove(turnstileWidgetId);
+      }
       const widgetContainer = document.getElementById("turnstile-widget");
       if (widgetContainer) {
         widgetContainer.innerHTML = "";
