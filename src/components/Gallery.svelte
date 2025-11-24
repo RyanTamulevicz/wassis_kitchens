@@ -1,4 +1,5 @@
 <script>
+  import { fade } from "svelte/transition";
   export let images = [];
 
   let selectedImage = null;
@@ -18,7 +19,7 @@
   <div class="container mx-auto px-6">
     <div class="text-center mb-16">
       <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Masterpieces</h2>
-      <div class="w-24 h-1 bg-orange-600 mx-auto rounded-full"></div>
+      <div class="w-24 h-1 bg-[var(--primary)] mx-auto rounded-full"></div>
       <p class="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
         Explore our portfolio of custom outdoor kitchens, designed to transform
         backyards into culinary paradises.
@@ -61,7 +62,7 @@
       transition:fade
     >
       <button
-        class="absolute top-6 right-6 text-white hover:text-orange-500 transition-colors"
+        class="absolute top-6 right-6 text-white hover:text-[var(--primary)] transition-colors"
         on:click={closeModal}
       >
         <svg

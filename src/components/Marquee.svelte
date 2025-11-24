@@ -2,19 +2,17 @@
   export let vendors = [];
 </script>
 
-<section id="vendors" class="py-16 bg-gray-50 overflow-hidden">
+<section id="vendors" class="py-16 bg-neutral-900 overflow-hidden">
   <div class="container mx-auto px-6 mb-8 text-center">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Our Premium Partners</h2>
-    <p class="text-gray-600">We work with the best brands in the industry</p>
+    <h2 class="text-3xl font-bold text-white mb-2">Our Premium Partners</h2>
+    <p class="text-gray-400">We work with the best brands in the industry</p>
   </div>
 
   <div class="relative flex overflow-x-hidden group">
-    <div
-      class="animate-marquee whitespace-nowrap flex items-center gap-16 py-4"
-    >
+    <div class="animate-marquee whitespace-nowrap flex items-center py-4">
       {#each vendors as vendor}
         <div
-          class="mx-4 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+          class="mx-12 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
         >
           <img
             src={vendor.src}
@@ -26,7 +24,7 @@
       <!-- Duplicate for seamless loop -->
       {#each vendors as vendor}
         <div
-          class="mx-4 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+          class="mx-12 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
         >
           <img
             src={vendor.src}
@@ -38,11 +36,11 @@
     </div>
 
     <div
-      class="absolute top-0 animate-marquee2 whitespace-nowrap flex items-center gap-16 py-4"
+      class="absolute top-0 animate-marquee2 whitespace-nowrap flex items-center py-4"
     >
       {#each vendors as vendor}
         <div
-          class="mx-4 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+          class="mx-12 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
         >
           <img
             src={vendor.src}
@@ -54,7 +52,7 @@
       <!-- Duplicate for seamless loop -->
       {#each vendors as vendor}
         <div
-          class="mx-4 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+          class="mx-12 w-48 h-24 flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
         >
           <img
             src={vendor.src}

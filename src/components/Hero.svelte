@@ -22,7 +22,7 @@
     <h1
       class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-lg"
     >
-      Elevate Your <span class="text-orange-500">Outdoor</span> Lifestyle
+      Elevate Your <span class="text-[var(--primary)]">Outdoor</span> Lifestyle
     </h1>
     <p
       class="text-xl md:text-2xl text-gray-200 mb-10 max-w-2xl mx-auto drop-shadow-md"
@@ -33,7 +33,7 @@
     <div class="flex flex-col md:flex-row gap-4 justify-center">
       <a
         href="#contact"
-        class="bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-orange-700 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+        class="bg-[var(--primary)] text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-[var(--secondary)] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
       >
         Start Your Project
       </a>
@@ -47,8 +47,9 @@
   </div>
 
   <!-- Scroll Indicator -->
-  <div
-    class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce"
+  <a
+    href="#vendors"
+    class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer hover:text-[var(--primary)] transition-colors"
   >
     <svg
       class="w-8 h-8 text-white/80"
@@ -63,5 +64,5 @@
         d="M19 14l-7 7m0 0l-7-7m7 7V3"
       ></path>
     </svg>
-  </div>
+  </a>
 </section>

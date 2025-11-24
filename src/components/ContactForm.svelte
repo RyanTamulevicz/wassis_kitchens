@@ -32,10 +32,10 @@
 >
   <!-- Decorative background elements -->
   <div
-    class="absolute top-0 left-0 w-64 h-64 bg-orange-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
+    class="absolute top-0 left-0 w-64 h-64 bg-[var(--primary)]/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
   ></div>
   <div
-    class="absolute bottom-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"
+    class="absolute bottom-0 right-0 w-96 h-96 bg-[var(--secondary)]/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"
   ></div>
 
   <div class="container mx-auto px-6 relative z-10">
@@ -72,7 +72,7 @@
                 id="name"
                 bind:value={formData.name}
                 required
-                class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-colors"
                 placeholder="John Doe"
               />
             </div>
@@ -87,7 +87,7 @@
                 id="email"
                 bind:value={formData.email}
                 required
-                class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-colors"
                 placeholder="john@example.com"
               />
             </div>
@@ -103,7 +103,7 @@
               type="tel"
               id="phone"
               bind:value={formData.phone}
-              class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+              class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-colors"
               placeholder="(555) 123-4567"
             />
           </div>
@@ -119,7 +119,7 @@
               bind:value={formData.message}
               required
               rows="4"
-              class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+              class="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-colors"
               placeholder="Tell us about your project..."
             ></textarea>
           </div>
@@ -127,7 +127,7 @@
           <button
             type="submit"
             disabled={isSubmitting}
-            class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-orange-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+            class="w-full bg-[var(--primary)] hover:bg-[var(--secondary)] text-white font-bold py-4 rounded-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-[var(--primary)]/30 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
           >
             {#if isSubmitting}
               <svg

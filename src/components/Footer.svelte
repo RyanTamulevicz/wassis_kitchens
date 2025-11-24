@@ -39,21 +39,26 @@
         <h3 class="text-white text-lg font-bold mb-4">Quick Links</h3>
         <ul class="space-y-2">
           <li>
-            <a href="#" class="hover:text-orange-500 transition-colors">Home</a>
-          </li>
-          <li>
-            <a href="#gallery" class="hover:text-orange-500 transition-colors"
-              >Gallery</a
+            <a href="#" class="hover:text-[var(--primary)] transition-colors"
+              >Home</a
             >
           </li>
           <li>
-            <a href="#vendors" class="hover:text-orange-500 transition-colors"
-              >Vendors</a
+            <a
+              href="#gallery"
+              class="hover:text-[var(--primary)] transition-colors">Gallery</a
             >
           </li>
           <li>
-            <a href="#contact" class="hover:text-orange-500 transition-colors"
-              >Contact</a
+            <a
+              href="#vendors"
+              class="hover:text-[var(--primary)] transition-colors">Vendors</a
+            >
+          </li>
+          <li>
+            <a
+              href="#contact"
+              class="hover:text-[var(--primary)] transition-colors">Contact</a
             >
           </li>
         </ul>
@@ -65,7 +70,7 @@
         <ul class="space-y-4">
           <li class="flex items-start gap-3">
             <svg
-              class="w-6 h-6 text-orange-600 mt-1 flex-shrink-0"
+              class="w-6 h-6 text-[var(--primary)] mt-1 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -81,11 +86,18 @@
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               ></path></svg
             >
-            <span>123 Outdoor Living Way<br />Sunnyville, FL 33123</span>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=748%20North%20Dr%20Suite%20A%2C%20Melbourne%2C%20FL%2032934"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--primary)] transition-colors"
+            >
+              <span>748 North Dr Suite A<br />Melbourne, FL 32934</span>
+            </a>
           </li>
           <li class="flex items-center gap-3">
             <svg
-              class="w-6 h-6 text-orange-600 flex-shrink-0"
+              class="w-6 h-6 text-[var(--primary)] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -100,7 +112,7 @@
           </li>
           <li class="flex items-center gap-3">
             <svg
-              class="w-6 h-6 text-orange-600 flex-shrink-0"
+              class="w-6 h-6 text-[var(--primary)] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
