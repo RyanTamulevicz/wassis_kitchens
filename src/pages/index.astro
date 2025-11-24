@@ -2,14 +2,9 @@
 import "@/styles/global.css";
 import Layout from "@/layouts/main.astro";
 import { Image } from "astro:assets";
-import Navbar from "@/components/navbar";
 import logo from "@/assets/wassi_logo_no_bg.png";
-import Hero from "@/components/hero";
 import heroImage from "@/assets/hero_image.jpg";
-import About from "@/components/about";
 import aboutImage from "@/assets/about_image.jpg";
-import Services from "@/components/services";
-import Gallery from "@/components/Gallery.astro";
 import GalleryImage1 from "@/assets/gallery/gal1.jpg";
 import GalleryImage2 from "@/assets/gallery/gal2.jpg";
 import GalleryImage3 from "@/assets/gallery/gal3.jpg";
@@ -18,86 +13,4 @@ import GalleryImage5 from "@/assets/gallery/gal5.jpg";
 import GalleryImage6 from "@/assets/gallery/gal6.jpg";
 ---
 
-<Layout title=''>
-  <main class='min-h-screen'>
-    <Navbar client:load>
-      <Image src={logo} alt='Wassi Logo' width={120} height={60} />
-    </Navbar>
-    <section id='home'>
-      <Hero>
-        <Image
-          src={heroImage}
-          alt='Outdoor Kitchen'
-          class='object-cover w-full h-full brightness-[0.7]'
-          priority
-        />
-      </Hero>
-    </section>
-    <section id='about' class='py-16 md:py-24'>
-      <About>
-        <Image
-          src={aboutImage}
-          alt='About section kitchen'
-          width={400}
-          height={500}
-          class='object-cover rounded-lg'
-        />
-      </About>
-    </section>
-    <section id='services' class='py-16 md:py-24'>
-      <Services />
-    </section>
-    <section id='gallery' class='py-16 md:py-24'>
-      <Gallery>
-        <Image
-          src={GalleryImage1}
-          alt='Luxury outdoor kitchen with stone countertops'
-          width={800}
-          height={600}
-          slot='image1'
-          class='object-cover w-full h-full'
-        />
-        <Image
-          src={GalleryImage2}
-          alt='Modern outdoor kitchen with pizza oven'
-          width={800}
-          height={600}
-          slot='image2'
-          class='object-cover w-full h-full'
-        />
-        <Image
-          src={GalleryImage3}
-          alt='Rustic outdoor kitchen with pergola'
-          width={800}
-          height={600}
-          slot='image3'
-          class='object-cover w-full h-full'
-        />
-        <Image
-          src={GalleryImage4}
-          alt='Poolside outdoor kitchen and bar'
-          width={800}
-          height={600}
-          slot='image4'
-          class='object-cover w-full h-full'
-        />
-        <Image
-          src={GalleryImage5}
-          alt='Compact outdoor kitchen for small spaces'
-          width={800}
-          height={600}
-          slot='image5'
-          class='object-cover w-full h-full'
-        />
-        <Image
-          src={GalleryImage6}
-          alt='Elegant outdoor kitchen with fireplace'
-          width={800}
-          height={600}
-          slot='image6'
-          class='object-cover w-full h-full'
-        />
-      </Gallery>
-    </section>
-  </main>
-</Layout>
+<Layout title=""> test </Layout>
