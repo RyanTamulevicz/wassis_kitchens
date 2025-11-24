@@ -1,20 +1,30 @@
-<script>
-  export let heroImage;
-</script>
+---
+import { Image } from "astro:assets";
+
+interface Props {
+  heroImage: ImageMetadata;
+}
+
+const { heroImage } = Astro.props;
+---
 
 <section
   class="relative h-screen flex items-center justify-center overflow-hidden"
 >
   <!-- Background Image with Overlay -->
   <div class="absolute inset-0 z-0">
-    <img
-      src={heroImage.src}
+    <Image
+      src={heroImage}
       alt="Outdoor Kitchen"
       class="w-full h-full object-cover"
+      width={1920}
+      height={1080}
+      loading="eager"
     />
     <div
       class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60"
-    ></div>
+    >
+    </div>
   </div>
 
   <!-- Content -->
@@ -49,6 +59,7 @@
   <!-- Scroll Indicator -->
   <a
     href="#vendors"
+    aria-label="Scroll to vendors section"
     class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce cursor-pointer hover:text-[var(--primary)] transition-colors"
   >
     <svg
@@ -56,13 +67,13 @@
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
+      aria-hidden="true"
     >
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
         stroke-width="2"
-        d="M19 14l-7 7m0 0l-7-7m7 7V3"
-      ></path>
+        d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
     </svg>
   </a>
 </section>

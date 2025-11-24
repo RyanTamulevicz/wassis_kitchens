@@ -1,0 +1,94 @@
+---
+import { Image } from "astro:assets";
+
+interface Props {
+  logo: ImageMetadata;
+}
+
+const { logo } = Astro.props;
+---
+
+<nav
+  id="navbar"
+  class="fixed w-full z-50 transition-all duration-300 bg-gradient-to-b from-black/50 to-transparent py-4"
+>
+  <div class="container mx-auto px-6 flex justify-between items-center">
+    <a href="/" class="flex items-center gap-2">
+      <Image
+        src={logo}
+        alt="Wassis' Outdoor Kitchens"
+        class="h-12 w-auto drop-shadow-md"
+        width={200}
+        loading="eager"
+      />
+    </a>
+
+    <div class="hidden md:flex items-center gap-8">
+      <a
+        href="#gallery"
+        class="font-medium transition-colors drop-shadow-md text-white hover:text-[var(--primary)] nav-link"
+        >Gallery</a
+      >
+      <a
+        href="#vendors"
+        class="font-medium transition-colors drop-shadow-md text-white hover:text-[var(--primary)] nav-link"
+        >Vendors</a
+      >
+      <a
+        href="#contact"
+        class="bg-[var(--primary)] text-white px-6 py-2 rounded-full font-semibold hover:bg-[var(--secondary)] transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      >
+        Get a Quote
+      </a>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const navbar = document.getElementById("navbar");
+  const navLinks = document.querySelectorAll(".nav-link");
+
+  function handleScroll() {
+    if (!navbar) return;
+
+    if (window.scrollY > 20) {
+      navbar.classList.add(
+        "bg-white/90",
+        "backdrop-blur-md",
+        "shadow-md",
+        "py-2"
+      );
+      navbar.classList.remove(
+        "bg-gradient-to-b",
+        "from-black/50",
+        "to-transparent",
+        "py-4"
+      );
+      navLinks.forEach((link) => {
+        link.classList.remove("text-white");
+        link.classList.add("text-gray-800");
+      });
+    } else {
+      navbar.classList.remove(
+        "bg-white/90",
+        "backdrop-blur-md",
+        "shadow-md",
+        "py-2"
+      );
+      navbar.classList.add(
+        "bg-gradient-to-b",
+        "from-black/50",
+        "to-transparent",
+        "py-4"
+      );
+      navLinks.forEach((link) => {
+        link.classList.add("text-white");
+        link.classList.remove("text-gray-800");
+      });
+    }
+  }
+
+  window.addEventListener("scroll", handleScroll);
+  // Initial check
+  handleScroll();
+</script>

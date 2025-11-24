@@ -1,0 +1,134 @@
+---
+import { Image, getImage } from "astro:assets";
+
+interface Props {
+  images: ImageMetadata[];
+}
+
+const { images } = Astro.props;
+
+// Pre-generate full-size images for the modal
+const fullSizeImages = await Promise.all(
+  images.map((image) => getImage({ src: image, format: "webp", quality: 90 }))
+);
+---
+
+<section id="gallery" class="py-20 bg-white">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Masterpieces</h2>
+      <div class="w-24 h-1 bg-[var(--primary)] mx-auto rounded-full"></div>
+      <p class="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+        Explore our portfolio of custom outdoor kitchens, designed to transform
+        backyards into culinary paradises.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        images.map((image, i) => (
+          <div
+            class="group relative overflow-hidden rounded-xl shadow-lg cursor-pointer aspect-[4/3] gallery-item"
+            data-full-src={fullSizeImages[i].src}
+            data-alt={`Project ${i + 1}`}
+          >
+            <Image
+              src={image}
+              alt={`Project ${i + 1}`}
+              class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+              width={600}
+            />
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <span class="text-white font-semibold text-lg border border-white px-6 py-2 rounded-full hover:bg-white hover:text-black transition-colors">
+                View Project
+              </span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div
+    id="gallery-modal"
+    class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300"
+    aria-hidden="true"
+  >
+    <button
+      id="close-modal"
+      class="absolute top-6 right-6 text-white hover:text-[var(--primary)] transition-colors"
+      aria-label="Close modal"
+    >
+      <svg
+        class="w-10 h-10"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <img
+      id="modal-image"
+      src=""
+      alt="Fullscreen view"
+      class="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
+    />
+  </div>
+</section>
+
+<script>
+  const modal = document.getElementById("gallery-modal");
+  const modalImage = document.getElementById("modal-image") as HTMLImageElement;
+  const closeButton = document.getElementById("close-modal");
+  const galleryItems = document.querySelectorAll(".gallery-item");
+
+  function openModal(src: string, alt: string) {
+    if (!modal || !modalImage) return;
+    modalImage.src = src;
+    modalImage.alt = alt;
+    modal.classList.remove("opacity-0", "pointer-events-none");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add("opacity-0", "pointer-events-none");
+    document.body.style.overflow = "";
+    // Clear src after transition to avoid flicker
+    setTimeout(() => {
+      if (modalImage) modalImage.src = "";
+    }, 300);
+  }
+
+  galleryItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const src = item.getAttribute("data-full-src");
+      const alt = item.getAttribute("data-alt");
+      if (src) openModal(src, alt || "");
+    });
+  });
+
+  closeButton?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeModal();
+  });
+
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal?.classList.contains("opacity-0")) {
+      closeModal();
+    }
+  });
+</script>
