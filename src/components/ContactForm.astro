@@ -1,3 +1,7 @@
+---
+import { actions } from "astro:actions";
+---
+
 <section
   id="contact"
   class="py-20 bg-gray-900 text-white relative overflow-hidden"
@@ -31,10 +35,20 @@
         class="hidden bg-green-500/20 border border-green-500 text-green-300 p-6 rounded-lg text-center mb-8 animate-fade-in"
       >
         <p class="font-semibold text-xl">Thank you!</p>
-        <p>We've received your message and will contact you shortly.</p>
+        <p id="success-text">
+          We've received your message and will contact you shortly.
+        </p>
       </div>
 
-      <form id="contact-form" class="space-y-6">
+      <div
+        id="error-message"
+        class="hidden bg-red-500/20 border border-red-500 text-red-300 p-6 rounded-lg text-center mb-8 animate-fade-in"
+      >
+        <p class="font-semibold text-xl">Error</p>
+        <p id="error-text">Something went wrong. Please try again.</p>
+      </div>
+
+      <form id="contact-form" class="space-y-6" method="POST">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label
@@ -128,44 +142,95 @@
 </section>
 
 <script>
+  import { actions } from "astro:actions";
+
   const form = document.getElementById("contact-form") as HTMLFormElement;
   const successMessage = document.getElementById("success-message");
+  const errorMessage = document.getElementById("error-message");
+  const successText = document.getElementById("success-text");
+  const errorText = document.getElementById("error-text");
   const submitButton = document.getElementById(
     "submit-button"
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
 
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    if (!submitButton || !buttonText || !loadingSpinner || !successMessage)
-      return;
+      if (
+        !submitButton ||
+        !buttonText ||
+        !loadingSpinner ||
+        !successMessage ||
+        !errorMessage ||
+        !successText ||
+        !errorText
+      )
+        return;
 
-    // Set loading state
-    submitButton.disabled = true;
-    buttonText.textContent = "Sending...";
-    loadingSpinner.classList.remove("hidden");
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Reset state
-    submitButton.disabled = false;
-    buttonText.textContent = "Send Message";
-    loadingSpinner.classList.add("hidden");
-
-    // Show success message
-    form.classList.add("hidden");
-    successMessage.classList.remove("hidden");
-
-    // Reset form
-    form.reset();
-
-    // Hide success message after 5 seconds
-    setTimeout(() => {
+      // Hide any previous messages
       successMessage.classList.add("hidden");
-      form.classList.remove("hidden");
-    }, 5000);
-  });
+      errorMessage.classList.add("hidden");
+
+      // Set loading state
+      submitButton.disabled = true;
+      buttonText.textContent = "Sending...";
+      loadingSpinner.classList.remove("hidden");
+
+      try {
+        const formData = new FormData(form);
+        const result = await actions.submitContactForm(formData);
+
+        // Reset loading state
+        submitButton.disabled = false;
+        buttonText.textContent = "Send Message";
+        loadingSpinner.classList.add("hidden");
+
+        // Astro Actions wraps the response in a SafeResult with a 'data' property
+        if (result.error) {
+          // Handle action error
+          errorText.textContent =
+            result.error.message || "Something went wrong. Please try again.";
+          errorMessage.classList.remove("hidden");
+        } else if (result.data && result.data.success === true) {
+          // Show success message
+          if (result.data.message) {
+            successText.textContent = result.data.message;
+          }
+          form.classList.add("hidden");
+          successMessage.classList.remove("hidden");
+
+          // Reset form
+          form.reset();
+
+          // Hide success message after 5 seconds
+          setTimeout(() => {
+            successMessage.classList.add("hidden");
+            form.classList.remove("hidden");
+          }, 5000);
+        } else {
+          // Show error message from the action response
+          const errorMsg =
+            result.data?.error || "Something went wrong. Please try again.";
+          errorText.textContent = errorMsg;
+          errorMessage.classList.remove("hidden");
+        }
+      } catch (error) {
+        // Reset loading state
+        submitButton.disabled = false;
+        buttonText.textContent = "Send Message";
+        loadingSpinner.classList.add("hidden");
+
+        // Log the error for debugging
+        console.error("Form submission error:", error);
+
+        // Show error message
+        errorText.textContent =
+          "An unexpected error occurred. Please try again later.";
+        errorMessage.classList.remove("hidden");
+      }
+    });
+  }
 </script>
