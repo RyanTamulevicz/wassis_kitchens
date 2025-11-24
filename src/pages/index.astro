@@ -2,15 +2,58 @@
 import "@/styles/global.css";
 import Layout from "@/layouts/main.astro";
 import { Image } from "astro:assets";
+
+// Components
+import Navbar from "@/components/Navbar.svelte";
+import Hero from "@/components/Hero.svelte";
+import Marquee from "@/components/Marquee.svelte";
+import Gallery from "@/components/Gallery.svelte";
+import ContactForm from "@/components/ContactForm.svelte";
+import Footer from "@/components/Footer.svelte";
+
+// Assets
 import logo from "@/assets/wassi_logo_no_bg.png";
 import heroImage from "@/assets/hero_image.jpg";
-import aboutImage from "@/assets/about_image.jpg";
+
+// Gallery Images
 import GalleryImage1 from "@/assets/gallery/gal1.jpg";
 import GalleryImage2 from "@/assets/gallery/gal2.jpg";
 import GalleryImage3 from "@/assets/gallery/gal3.jpg";
 import GalleryImage4 from "@/assets/gallery/gal4.jpg";
 import GalleryImage5 from "@/assets/gallery/gal5.jpg";
 import GalleryImage6 from "@/assets/gallery/gal6.jpg";
+
+const galleryImages = [
+  GalleryImage1,
+  GalleryImage2,
+  GalleryImage3,
+  GalleryImage4,
+  GalleryImage5,
+  GalleryImage6,
+];
+
+// Vendor Images
+import Alfa from "@/assets/vendors/alfa.png";
+import Challenger from "@/assets/vendors/challenger_designs.png";
+import DeltaHeat from "@/assets/vendors/delta_heat.png";
+import Napoleon from "@/assets/vendors/napoleon_prestiege.png";
+import TwinEagles from "@/assets/vendors/twin_eagles.png";
+
+const vendors = [Alfa, Challenger, DeltaHeat, Napoleon, TwinEagles];
 ---
 
-<Layout title=""> test </Layout>
+<Layout title="Wassis' Outdoor Kitchens | Custom Outdoor Living">
+  <Navbar client:load logo={logo} />
+
+  <main>
+    <Hero client:load heroImage={heroImage} />
+
+    <Marquee client:visible vendors={vendors} />
+
+    <Gallery client:visible images={galleryImages} />
+
+    <ContactForm client:visible />
+  </main>
+
+  <Footer client:visible />
+</Layout>
