@@ -12,5 +12,7 @@ export default defineConfig({
     },
 
   integrations: [svelte()],
-  adapter: cloudflare()
+  adapter: cloudflare({
+    imageService: "compile"
+  })
 });
