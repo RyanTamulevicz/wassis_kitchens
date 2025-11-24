@@ -1,6 +1,8 @@
 import { defineAction } from 'astro:actions';
 import { Resend } from 'resend';
 
+const resend = new Resend(import.meta.env.RESEND_API_KEY);
+
 export const server = {
   submitContactForm: defineAction({
     accept: 'form',
@@ -19,9 +21,7 @@ export const server = {
         };
       }
 
-      // Access environment variables
-      // In Cloudflare Pages, runtime environment variables are available via import.meta.env
-      // These must be set in Cloudflare Pages dashboard > Settings > Environment Variables
+      // Verify Turnstile token with Cloudflare
       const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
       if (!secretKey) {
         console.error('TURNSTILE_SECRET_KEY environment variable is not set');
@@ -94,17 +94,6 @@ export const server = {
           error: 'Server configuration error. Please try again later.',
         };
       }
-
-      const resendApiKey = import.meta.env.RESEND_API_KEY;
-      if (!resendApiKey) {
-        console.error('RESEND_API_KEY environment variable is not set');
-        return {
-          success: false,
-          error: 'Server configuration error. Please try again later.',
-        };
-      }
-
-      const resend = new Resend(resendApiKey);
 
       try {
         const response = await resend.emails.send({
