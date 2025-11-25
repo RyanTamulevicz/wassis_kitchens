@@ -38,16 +38,16 @@ export const server = {
 
       try {
         // Use FormData instead of JSON per Cloudflare documentation
-        const formData = new FormData();
-        formData.append('secret', secretKey);
-        formData.append('response', turnstileToken);
-        formData.append('remoteip', clientIP);
+        const verifyData = new FormData();
+        verifyData.append('secret', secretKey);
+        verifyData.append('response', turnstileToken);
+        verifyData.append('remoteip', clientIP);
 
         const verifyResponse = await fetch(
           'https://challenges.cloudflare.com/turnstile/v0/siteverify',
           {
             method: 'POST',
-            body: formData,
+            body: verifyData,
           }
         );
 
