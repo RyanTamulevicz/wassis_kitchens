@@ -203,24 +203,21 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       // Show the container
       turnstileContainer.style.display = "flex";
 
-      // Wait for Turnstile API to load
+      // Clear any existing widget content
+      const widgetEl = document.getElementById("turnstile-widget");
+      if (widgetEl) {
+        widgetEl.innerHTML = "";
+      }
+
+      // Wait for Turnstile API to load, then render
       function tryRender() {
         if (typeof window.turnstile === "undefined") {
           setTimeout(tryRender, 100);
           return;
         }
 
-        // Verify elements exist
-        if (!turnstileWidget) {
-          reject(new Error("Turnstile widget element not found"));
-          return;
-        }
-
-        // Clear any existing widget
-        turnstileWidget.innerHTML = "";
-
-        // Render the widget
-        turnstileWidgetId = window.turnstile.render(turnstileWidget, {
+        // Render the widget using string selector (more reliable)
+        turnstileWidgetId = window.turnstile.render("#turnstile-widget", {
           sitekey: siteKey,
           theme: "dark",
           callback: (token: string) => {
@@ -239,7 +236,7 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
             );
           },
           "expired-callback": () => {
-            // Token expired, re-render
+            // Token expired, reset
             if (window.turnstile && turnstileWidgetId) {
               window.turnstile.reset(turnstileWidgetId);
             }
@@ -247,7 +244,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         });
       }
 
-      tryRender();
+      // Small delay to ensure container is visible before rendering
+      setTimeout(tryRender, 50);
     });
   }
 
