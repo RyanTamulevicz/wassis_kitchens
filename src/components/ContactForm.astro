@@ -109,6 +109,15 @@ import { actions } from "astro:actions";
             placeholder="Tell us about your project..."></textarea>
         </div>
 
+        <!-- Turnstile Widget Container (hidden initially) -->
+        <div
+          id="turnstile-container"
+          class="justify-center"
+          style="display: none;"
+        >
+          <div id="turnstile-widget"></div>
+        </div>
+
         <button
           type="submit"
           id="submit-button"
@@ -141,38 +150,10 @@ import { actions } from "astro:actions";
   </div>
 </section>
 
-<!-- Turnstile Modal Overlay -->
-<div
-  id="turnstile-modal"
-  class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 p-4"
-  style="display: none;"
->
-  <div
-    class="bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-700"
-  >
-    <h3 class="text-2xl font-bold mb-4 text-white text-center">
-      Security Verification
-    </h3>
-    <p class="text-gray-400 mb-6 text-center">
-      Please complete the security check to send your message.
-    </p>
-    <div class="flex justify-center mb-4">
-      <div id="turnstile-widget"></div>
-    </div>
-    <button
-      id="turnstile-modal-close"
-      class="hidden mt-4 w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded-lg transition-colors"
-    >
-      Close
-    </button>
-  </div>
-</div>
-
 <!-- Cloudflare Turnstile Script -->
 <script
   src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-  async
-  defer></script>
+></script>
 
 <script>
   import { actions } from "astro:actions";
@@ -192,7 +173,6 @@ import { actions } from "astro:actions";
       options: TurnstileOptions
     ) => string;
     reset: (widgetId: string) => void;
-    ready: (callback: () => void) => void;
     remove: (widgetId: string) => void;
   }
 
@@ -212,16 +192,16 @@ import { actions } from "astro:actions";
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
-  const turnstileModal = document.getElementById("turnstile-modal");
-  const turnstileModalClose = document.getElementById("turnstile-modal-close");
+  const turnstileContainer = document.getElementById("turnstile-container");
+  const turnstileWidget = document.getElementById("turnstile-widget");
 
   // Turnstile widget ID and token
   let turnstileWidgetId: string | null = null;
   let turnstileToken: string | null = null;
   let isSubmitting = false;
 
-  // Show Turnstile modal and initialize widget
-  function showTurnstileModal(): Promise<string> {
+  // Show Turnstile widget inline and initialize
+  function showTurnstileWidget(): Promise<string> {
     return new Promise((resolve, reject) => {
       const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       if (!siteKey) {
@@ -230,114 +210,97 @@ import { actions } from "astro:actions";
         return;
       }
 
-      if (!turnstileModal) {
-        reject(new Error("Turnstile modal not found"));
+      if (!turnstileContainer || !turnstileWidget) {
+        reject(new Error("Turnstile container not found"));
         return;
       }
 
-      // Show modal with flex display
-      turnstileModal.style.display = "flex";
-      turnstileModal.classList.add("items-center", "justify-center");
-
-      // Clear previous widget if exists
-      const widgetContainer = document.getElementById("turnstile-widget");
-      if (!widgetContainer) {
-        reject(new Error("Turnstile widget container not found"));
-        return;
-      }
+      // Show the widget container
+      turnstileContainer.classList.remove("hidden");
+      turnstileContainer.classList.add("flex");
+      turnstileContainer.style.display = "flex";
 
       // Reset token
       turnstileToken = null;
 
-      // Use turnstile.ready() callback per Cloudflare documentation
-      if (typeof window.turnstile === "undefined") {
-        // If turnstile is not loaded yet, wait for it
-        const checkTurnstile = setInterval(() => {
-          if (typeof window.turnstile !== "undefined") {
-            clearInterval(checkTurnstile);
-            renderWidget();
-          }
-        }, 100);
-
-        // Timeout after 10 seconds
-        setTimeout(() => {
-          clearInterval(checkTurnstile);
-          if (typeof window.turnstile === "undefined") {
-            reject(new Error("Turnstile script failed to load"));
-          }
-        }, 10000);
-      } else {
-        renderWidget();
-      }
-
+      // Wait for Turnstile script to load (without using ready() since we removed async/defer)
       function renderWidget() {
+        if (typeof window.turnstile === "undefined") {
+          // If turnstile is not loaded yet, wait for it
+          setTimeout(renderWidget, 100);
+          return;
+        }
+
         if (!window.turnstile) {
           reject(new Error("Turnstile API not available"));
           return;
         }
 
         // Verify widget container still exists
-        if (!widgetContainer) {
+        if (!turnstileWidget) {
           reject(new Error("Turnstile widget container not found"));
           return;
         }
 
         // Clear container before rendering
-        widgetContainer.innerHTML = "";
+        turnstileWidget.innerHTML = "";
 
-        // Use turnstile.ready() to ensure API is fully loaded
-        window.turnstile.ready(() => {
-          // Render Turnstile widget
-          if (!widgetContainer) {
-            reject(new Error("Widget container disappeared"));
-            return;
-          }
-          turnstileWidgetId = window.turnstile!.render(widgetContainer, {
-            sitekey: siteKey,
-            theme: "dark",
-            callback: (token: string) => {
-              turnstileToken = token;
-              // Hide modal and resolve with token
-              hideModal();
-              resolve(token);
-            },
-            "error-callback": () => {
-              turnstileToken = null;
-              reject(new Error("Turnstile verification failed"));
-            },
-            "expired-callback": () => {
-              turnstileToken = null;
-              // Don't reject on expiry, just reset
-              const expiredContainer =
-                document.getElementById("turnstile-widget");
-              if (expiredContainer && turnstileWidgetId !== null) {
-                expiredContainer.innerHTML = "";
-                // Re-render widget after expiry
-                if (window.turnstile) {
-                  window.turnstile.ready(() => {
-                    turnstileWidgetId = window.turnstile!.render(
-                      expiredContainer,
-                      {
-                        sitekey: siteKey,
-                        theme: "dark",
-                        callback: (token: string) => {
-                          turnstileToken = token;
-                          hideModal();
-                          resolve(token);
-                        },
-                        "error-callback": () => {
-                          turnstileToken = null;
-                          reject(new Error("Turnstile verification failed"));
-                        },
-                      }
-                    );
-                  });
-                }
-              }
-            },
-          });
+        // Render Turnstile widget directly (no ready() needed since script loads synchronously)
+        turnstileWidgetId = window.turnstile.render(turnstileWidget, {
+          sitekey: siteKey,
+          theme: "dark",
+          callback: (token: string) => {
+            turnstileToken = token;
+            // Hide widget container and resolve with token
+            if (turnstileContainer) {
+              turnstileContainer.classList.add("hidden");
+              turnstileContainer.classList.remove("flex");
+              turnstileContainer.style.display = "none";
+            }
+            resolve(token);
+          },
+          "error-callback": () => {
+            turnstileToken = null;
+            if (turnstileContainer) {
+              turnstileContainer.classList.add("hidden");
+              turnstileContainer.classList.remove("flex");
+              turnstileContainer.style.display = "none";
+            }
+            reject(new Error("Turnstile verification failed"));
+          },
+          "expired-callback": () => {
+            turnstileToken = null;
+            // Don't reject on expiry, just reset and re-render
+            if (
+              turnstileWidget &&
+              turnstileWidgetId !== null &&
+              window.turnstile
+            ) {
+              turnstileWidget.innerHTML = "";
+              turnstileWidgetId = window.turnstile.render(turnstileWidget, {
+                sitekey: siteKey,
+                theme: "dark",
+                callback: (token: string) => {
+                  turnstileToken = token;
+                  if (turnstileContainer) {
+                    turnstileContainer.classList.add("hidden");
+                  }
+                  resolve(token);
+                },
+                "error-callback": () => {
+                  turnstileToken = null;
+                  if (turnstileContainer) {
+                    turnstileContainer.classList.add("hidden");
+                  }
+                  reject(new Error("Turnstile verification failed"));
+                },
+              });
+            }
+          },
         });
       }
+
+      renderWidget();
     });
   }
 
@@ -348,47 +311,17 @@ import { actions } from "astro:actions";
       if (window.turnstile.remove) {
         window.turnstile.remove(turnstileWidgetId);
       }
-      const widgetContainer = document.getElementById("turnstile-widget");
-      if (widgetContainer) {
-        widgetContainer.innerHTML = "";
+      if (turnstileWidget) {
+        turnstileWidget.innerHTML = "";
       }
       turnstileWidgetId = null;
     }
     turnstileToken = null;
-  }
-
-  // Helper function to hide modal
-  function hideModal() {
-    if (turnstileModal) {
-      turnstileModal.style.display = "none";
-      turnstileModal.classList.remove("items-center", "justify-center");
+    if (turnstileContainer) {
+      turnstileContainer.classList.add("hidden");
+      turnstileContainer.classList.remove("flex");
+      turnstileContainer.style.display = "none";
     }
-  }
-
-  // Close modal handler
-  if (turnstileModalClose) {
-    turnstileModalClose.addEventListener("click", () => {
-      hideModal();
-      resetTurnstile();
-      isSubmitting = false;
-      if (submitButton) submitButton.disabled = false;
-      if (buttonText) buttonText.textContent = "Send Message";
-      if (loadingSpinner) loadingSpinner.classList.add("hidden");
-    });
-  }
-
-  // Close modal on backdrop click
-  if (turnstileModal) {
-    turnstileModal.addEventListener("click", (e) => {
-      if (e.target === turnstileModal) {
-        hideModal();
-        resetTurnstile();
-        isSubmitting = false;
-        if (submitButton) submitButton.disabled = false;
-        if (buttonText) buttonText.textContent = "Send Message";
-        if (loadingSpinner) loadingSpinner.classList.add("hidden");
-      }
-    });
   }
 
   if (form) {
@@ -433,8 +366,8 @@ import { actions } from "astro:actions";
       }
 
       try {
-        // Show Turnstile modal and wait for completion
-        const token = await showTurnstileModal();
+        // Show Turnstile widget inline and wait for completion
+        const token = await showTurnstileWidget();
 
         // Set loading state after Turnstile completes
         submitButton.disabled = true;
