@@ -1,12 +1,10 @@
 import { defineAction } from 'astro:actions';
 import { Resend } from 'resend';
 
-const resend = new Resend(import.meta.env.RESEND_API_KEY);
-
 export const server = {
   submitContactForm: defineAction({
     accept: 'form',
-    handler: async (formData) => {
+    handler: async (formData, context) => {
       const name = formData.get('name') as string;
       const email = formData.get('email') as string;
       const phone = formData.get('phone') as string | null;
@@ -29,7 +27,19 @@ export const server = {
         };
       }
 
-      const recipientEmail = import.meta.env.CONTACT_EMAIL;
+      // Access Cloudflare runtime environment variables
+      const env = (context.locals as any).runtime?.env || {};
+      const resendApiKey = env.RESEND_API_KEY || import.meta.env.RESEND_API_KEY;
+      const recipientEmail = env.CONTACT_EMAIL || import.meta.env.CONTACT_EMAIL;
+
+      if (!resendApiKey) {
+        console.error('RESEND_API_KEY environment variable is not set');
+        return {
+          success: false,
+          error: 'Server configuration error. Please try again later.',
+        };
+      }
+
       if (!recipientEmail) {
         console.error('CONTACT_EMAIL environment variable is not set');
         return {
@@ -37,6 +47,9 @@ export const server = {
           error: 'Server configuration error. Please try again later.',
         };
       }
+
+      // Initialize Resend with runtime API key
+      const resend = new Resend(resendApiKey);
 
       try {
         const response = await resend.emails.send({
