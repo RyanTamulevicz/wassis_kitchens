@@ -9,9 +9,9 @@ const { title } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <title>{title || "Wassi's Outdoor Kitchens"}</title>
-    <!-- Cloudflare Turnstile Script -->
+    <!-- Cloudflare Turnstile Script (explicit rendering) -->
     <script
-      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
       async
       defer></script>
   </head>
