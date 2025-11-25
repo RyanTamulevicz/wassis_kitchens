@@ -6,67 +6,11 @@ const resend = new Resend(import.meta.env.RESEND_API_KEY);
 export const server = {
   submitContactForm: defineAction({
     accept: 'form',
-    handler: async (formData, { request }) => {
+    handler: async (formData) => {
       const name = formData.get('name') as string;
       const email = formData.get('email') as string;
       const phone = formData.get('phone') as string | null;
       const message = formData.get('message') as string;
-      const turnstileToken = formData.get('cf-turnstile-response') as string;
-
-      // Validate Turnstile token
-      if (!turnstileToken) {
-        return {
-          success: false,
-          error: 'Security verification failed. Please try again.',
-        };
-      }
-
-      // Verify Turnstile token with Cloudflare
-      const secretKey = import.meta.env.TURNSTILE_SECRET_KEY;
-      if (!secretKey) {
-        console.error('TURNSTILE_SECRET_KEY environment variable is not set');
-        return {
-          success: false,
-          error: 'Server configuration error. Please try again later.',
-        };
-      }
-
-      // Get client IP address for Turnstile verification
-      const clientIP = request.headers.get('CF-Connecting-IP') || 
-                       request.headers.get('X-Forwarded-For')?.split(',')[0] || 
-                       'unknown';
-
-      try {
-        // Use FormData instead of JSON per Cloudflare documentation
-        const verifyData = new FormData();
-        verifyData.append('secret', secretKey);
-        verifyData.append('response', turnstileToken);
-        verifyData.append('remoteip', clientIP);
-
-        const verifyResponse = await fetch(
-          'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-          {
-            method: 'POST',
-            body: verifyData,
-          }
-        );
-
-        const verifyResult = await verifyResponse.json();
-
-        if (!verifyResult.success) {
-          console.error('Turnstile verification failed:', verifyResult);
-          return {
-            success: false,
-            error: 'Security verification failed. Please try again.',
-          };
-        }
-      } catch (error) {
-        console.error('Error verifying Turnstile token:', error);
-        return {
-          success: false,
-          error: 'Security verification error. Please try again later.',
-        };
-      }
 
       // Validate required fields
       if (!name || !email || !message) {

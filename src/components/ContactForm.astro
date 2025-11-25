@@ -1,5 +1,5 @@
 ---
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+
 ---
 
 <section
@@ -109,15 +109,6 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
             placeholder="Tell us about your project..."></textarea>
         </div>
 
-        <!-- Cloudflare Turnstile Widget Container (hidden until button click) -->
-        <div
-          id="turnstile-container"
-          class="justify-center py-4"
-          style="display: none;"
-        >
-          <div id="turnstile-widget"></div>
-        </div>
-
         <button
           type="submit"
           id="submit-button"
@@ -150,25 +141,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   </div>
 </section>
 
-<!-- Store site key for JavaScript -->
-<script define:vars={{ siteKey }}>
-  window.TURNSTILE_SITE_KEY = siteKey;
-</script>
-
 <script>
   import { actions } from "astro:actions";
-
-  // TypeScript declarations
-  declare global {
-    interface Window {
-      TURNSTILE_SITE_KEY: string;
-      turnstile?: {
-        render: (container: string | HTMLElement, options: any) => string;
-        reset: (widgetId?: string) => void;
-        remove: (widgetId: string) => void;
-      };
-    }
-  }
 
   const form = document.getElementById("contact-form") as HTMLFormElement;
   const successMessage = document.getElementById("success-message");
@@ -180,88 +154,8 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
-  const turnstileContainer = document.getElementById("turnstile-container");
-  const turnstileWidget = document.getElementById("turnstile-widget");
 
   let isSubmitting = false;
-  let turnstileWidgetId: string | null = null;
-
-  // Function to show Turnstile and wait for verification
-  function showTurnstileAndVerify(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!turnstileContainer || !turnstileWidget) {
-        reject(new Error("Turnstile container not found"));
-        return;
-      }
-
-      const siteKey = window.TURNSTILE_SITE_KEY;
-      if (!siteKey) {
-        reject(new Error("Turnstile site key not configured"));
-        return;
-      }
-
-      // Show the container
-      turnstileContainer.style.display = "flex";
-
-      // Clear any existing widget content
-      const widgetEl = document.getElementById("turnstile-widget");
-      if (widgetEl) {
-        widgetEl.innerHTML = "";
-      }
-
-      // Wait for Turnstile API to load, then render
-      function tryRender() {
-        if (typeof window.turnstile === "undefined") {
-          setTimeout(tryRender, 100);
-          return;
-        }
-
-        // Render the widget using string selector (more reliable)
-        turnstileWidgetId = window.turnstile.render("#turnstile-widget", {
-          sitekey: siteKey,
-          theme: "dark",
-          callback: (token: string) => {
-            // Success! Hide widget and resolve with token
-            if (turnstileContainer) {
-              turnstileContainer.style.display = "none";
-            }
-            resolve(token);
-          },
-          "error-callback": () => {
-            if (turnstileContainer) {
-              turnstileContainer.style.display = "none";
-            }
-            reject(
-              new Error("Security verification failed. Please try again.")
-            );
-          },
-          "expired-callback": () => {
-            // Token expired, reset
-            if (window.turnstile && turnstileWidgetId) {
-              window.turnstile.reset(turnstileWidgetId);
-            }
-          },
-        });
-      }
-
-      // Small delay to ensure container is visible before rendering
-      setTimeout(tryRender, 50);
-    });
-  }
-
-  // Function to reset/cleanup Turnstile
-  function resetTurnstile() {
-    if (turnstileWidgetId && window.turnstile) {
-      window.turnstile.remove(turnstileWidgetId);
-      turnstileWidgetId = null;
-    }
-    if (turnstileWidget) {
-      turnstileWidget.innerHTML = "";
-    }
-    if (turnstileContainer) {
-      turnstileContainer.style.display = "none";
-    }
-  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -286,37 +180,13 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
       successMessage.classList.add("hidden");
       errorMessage.classList.add("hidden");
 
-      // Validate form fields
-      const nameInput = form.querySelector(
-        'input[name="name"]'
-      ) as HTMLInputElement;
-      const emailInput = form.querySelector(
-        'input[name="email"]'
-      ) as HTMLInputElement;
-      const messageInput = form.querySelector(
-        'textarea[name="message"]'
-      ) as HTMLTextAreaElement;
-
-      if (!nameInput?.value || !emailInput?.value || !messageInput?.value) {
-        errorText.textContent = "Please fill in all required fields.";
-        errorMessage.classList.remove("hidden");
-        isSubmitting = false;
-        return;
-      }
+      // Set loading state
+      submitButton.disabled = true;
+      buttonText.textContent = "Sending...";
+      loadingSpinner.classList.remove("hidden");
 
       try {
-        // Step 1: Show Turnstile and wait for verification
-        const token = await showTurnstileAndVerify();
-
-        // Step 2: Set loading state
-        submitButton.disabled = true;
-        buttonText.textContent = "Sending...";
-        loadingSpinner.classList.remove("hidden");
-
-        // Step 3: Submit form with token
         const formData = new FormData(form);
-        formData.append("cf-turnstile-response", token);
-
         const result = await actions.submitContactForm(formData);
 
         // Reset loading state
@@ -324,7 +194,6 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
         isSubmitting = false;
-        resetTurnstile();
 
         // Handle response
         if (result.error) {
@@ -351,21 +220,15 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
           errorMessage.classList.remove("hidden");
         }
       } catch (error) {
-        // Reset states
+        // Reset loading state
         submitButton.disabled = false;
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
         isSubmitting = false;
-        resetTurnstile();
 
         console.error("Form submission error:", error);
-
-        if (error instanceof Error) {
-          errorText.textContent = error.message;
-        } else {
-          errorText.textContent =
-            "An unexpected error occurred. Please try again later.";
-        }
+        errorText.textContent =
+          "An unexpected error occurred. Please try again later.";
         errorMessage.classList.remove("hidden");
       }
     });
