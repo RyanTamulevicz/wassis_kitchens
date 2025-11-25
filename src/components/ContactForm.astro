@@ -1,5 +1,5 @@
 ---
-import { actions } from "astro:actions";
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 ---
 
 <section
@@ -109,13 +109,10 @@ import { actions } from "astro:actions";
             placeholder="Tell us about your project..."></textarea>
         </div>
 
-        <!-- Turnstile Widget Container (hidden initially) -->
-        <div
-          id="turnstile-container"
-          class="justify-center"
-          style="display: none;"
-        >
-          <div id="turnstile-widget"></div>
+        <!-- Cloudflare Turnstile Widget (Implicit Rendering) -->
+        <div class="flex justify-center">
+          <div class="cf-turnstile" data-sitekey={siteKey} data-theme="dark">
+          </div>
         </div>
 
         <button
@@ -150,37 +147,8 @@ import { actions } from "astro:actions";
   </div>
 </section>
 
-<!-- Cloudflare Turnstile Script -->
-<script
-  src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-></script>
-
 <script>
   import { actions } from "astro:actions";
-
-  // TypeScript declarations for Cloudflare Turnstile
-  interface TurnstileOptions {
-    sitekey: string;
-    theme?: "light" | "dark" | "auto";
-    callback?: (token: string) => void;
-    "error-callback"?: () => void;
-    "expired-callback"?: () => void;
-  }
-
-  interface Turnstile {
-    render: (
-      container: HTMLElement | string,
-      options: TurnstileOptions
-    ) => string;
-    reset: (widgetId: string) => void;
-    remove: (widgetId: string) => void;
-  }
-
-  declare global {
-    interface Window {
-      turnstile?: Turnstile;
-    }
-  }
 
   const form = document.getElementById("contact-form") as HTMLFormElement;
   const successMessage = document.getElementById("success-message");
@@ -192,137 +160,8 @@ import { actions } from "astro:actions";
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
-  const turnstileContainer = document.getElementById("turnstile-container");
-  const turnstileWidget = document.getElementById("turnstile-widget");
 
-  // Turnstile widget ID and token
-  let turnstileWidgetId: string | null = null;
-  let turnstileToken: string | null = null;
   let isSubmitting = false;
-
-  // Show Turnstile widget inline and initialize
-  function showTurnstileWidget(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
-      if (!siteKey) {
-        console.error("Turnstile site key is not configured");
-        reject(new Error("Turnstile configuration error"));
-        return;
-      }
-
-      if (!turnstileContainer || !turnstileWidget) {
-        reject(new Error("Turnstile container not found"));
-        return;
-      }
-
-      // Show the widget container
-      turnstileContainer.classList.remove("hidden");
-      turnstileContainer.classList.add("flex");
-      turnstileContainer.style.display = "flex";
-
-      // Reset token
-      turnstileToken = null;
-
-      // Wait for Turnstile script to load (without using ready() since we removed async/defer)
-      function renderWidget() {
-        if (typeof window.turnstile === "undefined") {
-          // If turnstile is not loaded yet, wait for it
-          setTimeout(renderWidget, 100);
-          return;
-        }
-
-        if (!window.turnstile) {
-          reject(new Error("Turnstile API not available"));
-          return;
-        }
-
-        // Verify widget container still exists
-        if (!turnstileWidget) {
-          reject(new Error("Turnstile widget container not found"));
-          return;
-        }
-
-        // Clear container before rendering
-        turnstileWidget.innerHTML = "";
-
-        // Render Turnstile widget directly (no ready() needed since script loads synchronously)
-        turnstileWidgetId = window.turnstile.render(turnstileWidget, {
-          sitekey: siteKey,
-          theme: "dark",
-          callback: (token: string) => {
-            turnstileToken = token;
-            // Hide widget container and resolve with token
-            if (turnstileContainer) {
-              turnstileContainer.classList.add("hidden");
-              turnstileContainer.classList.remove("flex");
-              turnstileContainer.style.display = "none";
-            }
-            resolve(token);
-          },
-          "error-callback": () => {
-            turnstileToken = null;
-            if (turnstileContainer) {
-              turnstileContainer.classList.add("hidden");
-              turnstileContainer.classList.remove("flex");
-              turnstileContainer.style.display = "none";
-            }
-            reject(new Error("Turnstile verification failed"));
-          },
-          "expired-callback": () => {
-            turnstileToken = null;
-            // Don't reject on expiry, just reset and re-render
-            if (
-              turnstileWidget &&
-              turnstileWidgetId !== null &&
-              window.turnstile
-            ) {
-              turnstileWidget.innerHTML = "";
-              turnstileWidgetId = window.turnstile.render(turnstileWidget, {
-                sitekey: siteKey,
-                theme: "dark",
-                callback: (token: string) => {
-                  turnstileToken = token;
-                  if (turnstileContainer) {
-                    turnstileContainer.classList.add("hidden");
-                  }
-                  resolve(token);
-                },
-                "error-callback": () => {
-                  turnstileToken = null;
-                  if (turnstileContainer) {
-                    turnstileContainer.classList.add("hidden");
-                  }
-                  reject(new Error("Turnstile verification failed"));
-                },
-              });
-            }
-          },
-        });
-      }
-
-      renderWidget();
-    });
-  }
-
-  // Reset Turnstile widget
-  function resetTurnstile() {
-    if (turnstileWidgetId !== null && typeof window.turnstile !== "undefined") {
-      // Use remove() to properly clean up the widget
-      if (window.turnstile.remove) {
-        window.turnstile.remove(turnstileWidgetId);
-      }
-      if (turnstileWidget) {
-        turnstileWidget.innerHTML = "";
-      }
-      turnstileWidgetId = null;
-    }
-    turnstileToken = null;
-    if (turnstileContainer) {
-      turnstileContainer.classList.add("hidden");
-      turnstileContainer.classList.remove("flex");
-      turnstileContainer.style.display = "none";
-    }
-  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -347,37 +186,24 @@ import { actions } from "astro:actions";
       successMessage.classList.add("hidden");
       errorMessage.classList.add("hidden");
 
-      // Validate form fields first
-      const nameInput = form.querySelector(
-        'input[name="name"]'
-      ) as HTMLInputElement;
-      const emailInput = form.querySelector(
-        'input[name="email"]'
-      ) as HTMLInputElement;
-      const messageInput = form.querySelector(
-        'textarea[name="message"]'
-      ) as HTMLTextAreaElement;
+      // Get form data (Turnstile automatically adds cf-turnstile-response)
+      const formData = new FormData(form);
 
-      if (!nameInput?.value || !emailInput?.value || !messageInput?.value) {
-        errorText.textContent = "Please fill in all required fields.";
+      // Check if Turnstile token is present
+      const turnstileToken = formData.get("cf-turnstile-response");
+      if (!turnstileToken) {
+        errorText.textContent = "Please complete the security verification.";
         errorMessage.classList.remove("hidden");
         isSubmitting = false;
         return;
       }
 
+      // Set loading state
+      submitButton.disabled = true;
+      buttonText.textContent = "Sending...";
+      loadingSpinner.classList.remove("hidden");
+
       try {
-        // Show Turnstile widget inline and wait for completion
-        const token = await showTurnstileWidget();
-
-        // Set loading state after Turnstile completes
-        submitButton.disabled = true;
-        buttonText.textContent = "Sending...";
-        loadingSpinner.classList.remove("hidden");
-
-        // Submit form with Turnstile token
-        const formData = new FormData(form);
-        formData.append("cf-turnstile-response", token);
-
         const result = await actions.submitContactForm(formData);
 
         // Reset loading state
@@ -386,24 +212,22 @@ import { actions } from "astro:actions";
         loadingSpinner.classList.add("hidden");
         isSubmitting = false;
 
-        // Reset Turnstile widget after submission attempt
-        resetTurnstile();
+        // Reset Turnstile widget for next submission
+        if (typeof window.turnstile !== "undefined") {
+          window.turnstile.reset();
+        }
 
-        // Astro Actions wraps the response in a SafeResult with a 'data' property
+        // Handle response
         if (result.error) {
-          // Handle action error
           errorText.textContent =
             result.error.message || "Something went wrong. Please try again.";
           errorMessage.classList.remove("hidden");
         } else if (result.data && result.data.success === true) {
-          // Show success message
           if (result.data.message) {
             successText.textContent = result.data.message;
           }
           form.classList.add("hidden");
           successMessage.classList.remove("hidden");
-
-          // Reset form
           form.reset();
 
           // Hide success message after 5 seconds
@@ -412,7 +236,6 @@ import { actions } from "astro:actions";
             form.classList.remove("hidden");
           }, 5000);
         } else {
-          // Show error message from the action response
           const errorMsg =
             result.data?.error || "Something went wrong. Please try again.";
           errorText.textContent = errorMsg;
@@ -426,21 +249,24 @@ import { actions } from "astro:actions";
         isSubmitting = false;
 
         // Reset Turnstile widget on error
-        resetTurnstile();
-
-        // Log the error for debugging
-        console.error("Form submission error:", error);
-
-        // Show error message
-        if (error instanceof Error && error.message.includes("Turnstile")) {
-          errorText.textContent =
-            "Security verification failed. Please try again.";
-        } else {
-          errorText.textContent =
-            "An unexpected error occurred. Please try again later.";
+        if (typeof window.turnstile !== "undefined") {
+          window.turnstile.reset();
         }
+
+        console.error("Form submission error:", error);
+        errorText.textContent =
+          "An unexpected error occurred. Please try again later.";
         errorMessage.classList.remove("hidden");
       }
     });
+  }
+
+  // TypeScript declaration for Turnstile
+  declare global {
+    interface Window {
+      turnstile?: {
+        reset: (widgetId?: string) => void;
+      };
+    }
   }
 </script>
