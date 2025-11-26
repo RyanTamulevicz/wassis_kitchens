@@ -1,5 +1,7 @@
 ---
 import "@/styles/global.css";
+import { getImage } from "astro:assets";
+import logo from "@/assets/wassi_logo_no_bg.png";
 
 interface Props {
   title?: string;
@@ -7,16 +9,29 @@ interface Props {
   image?: string;
 }
 
+// Generate optimized logo URL for OG image
+const optimizedLogo = await getImage({
+  src: logo,
+  format: "png",
+  width: 1200,
+  height: 630,
+  fit: "contain",
+  background: "white", // Add white background for better social card visibility
+});
+
 const {
   title = "Wassis' Outdoor Kitchens | Custom Outdoor Living",
   description = "Wassis' Outdoor Kitchens: Premier custom outdoor kitchens and grills on the Space Coast. Expert design & installation services in Melbourne, FL. Creating your ultimate backyard oasis.",
-  image = "/hero_image.jpg",
+  image = optimizedLogo.src,
 } = Astro.props;
 
 const canonicalURL = new URL(
   Astro.url.pathname,
   Astro.site || "https://wassisoutdoorkitchens.com"
 );
+
+// Ensure image URL is absolute
+const socialImageURL = new URL(image, canonicalURL.origin).href;
 ---
 
 <html lang="en">
@@ -33,14 +48,14 @@ const canonicalURL = new URL(
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={image} />
+    <meta property="og:image" content={socialImageURL} />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={image} />
+    <meta property="twitter:image" content={socialImageURL} />
 
     <!-- Cloudflare Turnstile - explicit rendering -->
     <script
