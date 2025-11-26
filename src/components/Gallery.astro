@@ -52,7 +52,7 @@ const fullSizeImages = await Promise.all(
   <!-- Modal -->
   <div
     id="gallery-modal"
-    class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300"
+    class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 opacity-0 pointer-events-none invisible transition-opacity duration-300"
     aria-hidden="true"
   >
     <button
@@ -93,17 +93,20 @@ const fullSizeImages = await Promise.all(
     if (!modal || !modalImage) return;
     modalImage.src = src;
     modalImage.alt = alt;
-    modal.classList.remove("opacity-0", "pointer-events-none");
+    modal.classList.remove("opacity-0", "pointer-events-none", "invisible");
+    modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   }
 
   function closeModal() {
     if (!modal) return;
     modal.classList.add("opacity-0", "pointer-events-none");
+    modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     // Clear src after transition to avoid flicker
     setTimeout(() => {
       if (modalImage) modalImage.src = "";
+      if (modal) modal.classList.add("invisible");
     }, 300);
   }
 
