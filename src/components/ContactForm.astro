@@ -1,5 +1,5 @@
 ---
-
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 ---
 
 <section
@@ -109,6 +109,11 @@
             placeholder="Tell us about your project..."></textarea>
         </div>
 
+        <!-- Turnstile container - hidden until submit clicked -->
+        <div id="turnstile-container" class="hidden justify-center py-4">
+          <div id="turnstile-widget"></div>
+        </div>
+
         <button
           type="submit"
           id="submit-button"
@@ -117,7 +122,7 @@
           <span id="button-text">Send Message</span>
           <svg
             id="loading-spinner"
-            class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            class="hidden animate-spin ml-3 h-5 w-5 text-white"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -141,6 +146,11 @@
   </div>
 </section>
 
+<!-- Pass site key to client -->
+<script define:vars={{ siteKey }}>
+  window.TURNSTILE_SITE_KEY = siteKey;
+</script>
+
 <script>
   import { actions } from "astro:actions";
 
@@ -154,8 +164,109 @@
   ) as HTMLButtonElement;
   const buttonText = document.getElementById("button-text");
   const loadingSpinner = document.getElementById("loading-spinner");
+  const turnstileContainer = document.getElementById("turnstile-container");
 
   let isSubmitting = false;
+  let turnstileWidgetId: string | null = null;
+
+  // Declare turnstile types
+  declare global {
+    interface Window {
+      TURNSTILE_SITE_KEY: string;
+      turnstile?: {
+        render: (
+          container: string,
+          options: {
+            sitekey: string;
+            theme?: string;
+            callback?: (token: string) => void;
+            "error-callback"?: () => void;
+            "expired-callback"?: () => void;
+          }
+        ) => string;
+        reset: (widgetId?: string) => void;
+        remove: (widgetId: string) => void;
+      };
+    }
+  }
+
+  // Show Turnstile and wait for verification
+  function showTurnstileAndVerify(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      if (!turnstileContainer) {
+        reject(new Error("Turnstile container not found"));
+        return;
+      }
+
+      const siteKey = window.TURNSTILE_SITE_KEY;
+      if (!siteKey) {
+        reject(new Error("Turnstile site key not configured"));
+        return;
+      }
+
+      // Show the container
+      turnstileContainer.classList.remove("hidden");
+      turnstileContainer.classList.add("flex");
+
+      // Wait for Turnstile API to load
+      function tryRender() {
+        if (typeof window.turnstile === "undefined") {
+          setTimeout(tryRender, 100);
+          return;
+        }
+
+        // Clear any existing widget
+        const widgetEl = document.getElementById("turnstile-widget");
+        if (widgetEl) {
+          widgetEl.innerHTML = "";
+        }
+
+        // Render the widget using string selector
+        turnstileWidgetId = window.turnstile.render("#turnstile-widget", {
+          sitekey: siteKey,
+          theme: "dark",
+          callback: (token: string) => {
+            // Success! Hide widget and resolve with token
+            if (turnstileContainer) {
+              turnstileContainer.classList.add("hidden");
+              turnstileContainer.classList.remove("flex");
+            }
+            resolve(token);
+          },
+          "error-callback": () => {
+            if (turnstileContainer) {
+              turnstileContainer.classList.add("hidden");
+              turnstileContainer.classList.remove("flex");
+            }
+            reject(
+              new Error("Security verification failed. Please try again.")
+            );
+          },
+          "expired-callback": () => {
+            // Token expired, reset
+            if (window.turnstile && turnstileWidgetId) {
+              window.turnstile.reset(turnstileWidgetId);
+            }
+          },
+        });
+      }
+
+      // Small delay to ensure container is visible
+      setTimeout(tryRender, 50);
+    });
+  }
+
+  // Reset Turnstile state
+  function resetTurnstile() {
+    if (turnstileContainer) {
+      turnstileContainer.classList.add("hidden");
+      turnstileContainer.classList.remove("flex");
+    }
+    if (window.turnstile && turnstileWidgetId) {
+      window.turnstile.remove(turnstileWidgetId);
+      turnstileWidgetId = null;
+    }
+  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {
@@ -180,13 +291,21 @@
       successMessage.classList.add("hidden");
       errorMessage.classList.add("hidden");
 
-      // Set loading state
+      // Change button to show we're waiting for verification
       submitButton.disabled = true;
-      buttonText.textContent = "Sending...";
-      loadingSpinner.classList.remove("hidden");
+      buttonText.textContent = "Verifying...";
 
       try {
+        // Show Turnstile and wait for token
+        const turnstileToken = await showTurnstileAndVerify();
+
+        // Now submit with the token
+        buttonText.textContent = "Sending...";
+        loadingSpinner.classList.remove("hidden");
+
         const formData = new FormData(form);
+        formData.append("cf-turnstile-response", turnstileToken);
+
         const result = await actions.submitContactForm(formData);
 
         // Reset loading state
@@ -194,6 +313,7 @@
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
         isSubmitting = false;
+        resetTurnstile();
 
         // Handle response
         if (result.error) {
@@ -225,10 +345,14 @@
         buttonText.textContent = "Send Message";
         loadingSpinner.classList.add("hidden");
         isSubmitting = false;
+        resetTurnstile();
 
         console.error("Form submission error:", error);
-        errorText.textContent =
-          "An unexpected error occurred. Please try again later.";
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred. Please try again later.";
+        errorText.textContent = errorMsg;
         errorMessage.classList.remove("hidden");
       }
     });

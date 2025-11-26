@@ -9,6 +9,7 @@ export const server = {
       const email = formData.get('email') as string;
       const phone = formData.get('phone') as string | null;
       const message = formData.get('message') as string;
+      const turnstileToken = formData.get('cf-turnstile-response') as string;
 
       // Validate required fields
       if (!name || !email || !message) {
@@ -31,6 +32,54 @@ export const server = {
       const env = (context.locals as any).runtime?.env || {};
       const resendApiKey = env.RESEND_API_KEY || import.meta.env.RESEND_API_KEY;
       const recipientEmail = env.CONTACT_EMAIL || import.meta.env.CONTACT_EMAIL;
+      const turnstileSecretKey = env.TURNSTILE_SECRET_KEY || import.meta.env.TURNSTILE_SECRET_KEY;
+
+      // Validate Turnstile token
+      if (!turnstileToken) {
+        return {
+          success: false,
+          error: 'Security verification required. Please try again.',
+        };
+      }
+
+      if (!turnstileSecretKey) {
+        console.error('TURNSTILE_SECRET_KEY environment variable is not set');
+        return {
+          success: false,
+          error: 'Server configuration error. Please try again later.',
+        };
+      }
+
+      // Verify Turnstile token with Cloudflare
+      try {
+        const verifyData = new FormData();
+        verifyData.append('secret', turnstileSecretKey);
+        verifyData.append('response', turnstileToken);
+
+        const verifyResponse = await fetch(
+          'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+          {
+            method: 'POST',
+            body: verifyData,
+          }
+        );
+
+        const verifyResult = await verifyResponse.json() as { success: boolean; 'error-codes'?: string[] };
+
+        if (!verifyResult.success) {
+          console.error('Turnstile verification failed:', verifyResult['error-codes']);
+          return {
+            success: false,
+            error: 'Security verification failed. Please try again.',
+          };
+        }
+      } catch (error) {
+        console.error('Error verifying Turnstile token:', error);
+        return {
+          success: false,
+          error: 'Security verification error. Please try again later.',
+        };
+      }
 
       if (!resendApiKey) {
         console.error('RESEND_API_KEY environment variable is not set');
